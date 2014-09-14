@@ -6,7 +6,6 @@ import static supplies.Constants.*;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
@@ -14,11 +13,10 @@ import java.nio.channels.CompletionHandler;
 public class Server {
 
     public static void main (String[] args) throws IOException {
-        Parameters serverParams = new Parameters();
-        ServerSocket serverSocket = new ServerSocket(serverParams.getPort());
+        final Parameters serverParams = new Parameters();
 
         final AsynchronousServerSocketChannel ssc = AsynchronousServerSocketChannel.open();
-        ssc.bind(new InetSocketAddress(address, serverParams.getPort()));
+        ssc.bind(new InetSocketAddress(ADDRESS, serverParams.getPort()));
 
         ssc.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
             @Override
@@ -36,7 +34,7 @@ public class Server {
             try {
                 Thread.sleep(1000);
             }
-            catch (InterruptedException e) {
+            catch (InterruptedException ignored) {
                 break;
             }
         }
