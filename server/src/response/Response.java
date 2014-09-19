@@ -95,9 +95,10 @@ public class Response {
         }
         response += "\r\n";
         response += "Date: " + getTimeToString() + "\r\n";
+        response += "Server: AbashinServer" + "\r\n";
         response += "Content-Type: " + getTypeByPath(path) + "\r\n";
         response += "Content-Length: " + contentLength + "\r\n";
-        response += "Connection: close\r\n\r\n";
+        response += "Connection: close" + "\r\n\r\n";
 
         return response;
     }

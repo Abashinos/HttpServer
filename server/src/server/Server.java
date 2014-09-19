@@ -9,11 +9,21 @@ import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.text.ParseException;
 
 public class Server {
 
     public static void main (String[] args) throws IOException {
-        final Parameters serverParams = new Parameters();
+
+        int customPort = 0;
+        try {
+            if (args.length != 0) {
+                customPort = Integer.parseInt(args[0]);
+            }
+        }
+        catch (NumberFormatException ignored) {}
+
+        final Parameters serverParams = new Parameters((customPort == 0)?(9000):(customPort), 8);
         final ThreadPool threadPool = new ThreadPool(serverParams);
 
         final AsynchronousServerSocketChannel ssc = AsynchronousServerSocketChannel.open();

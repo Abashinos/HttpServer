@@ -3,12 +3,13 @@ package worker;
 import Exceptions.BadRequestException;
 import response.Response;
 import server.ThreadPool;
-import supplies.Constants;
+import supplies.Parameters.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.ClosedChannelException;
 import java.nio.charset.CharacterCodingException;
 
 import static request.HttpRequestParser.*;
@@ -24,7 +25,7 @@ public class Worker implements Runnable{
     private ThreadPool threadPool = null;
     private AsynchronousSocketChannel socket = null;
     private int workerId = 0;
-    //private final ByteBuffer buffer = ByteBuffer.allocate(1024);
+    private int bufferSize = 4096;
 
     public Worker(ThreadPool threadPool, int id) {
         this.threadPool = threadPool;
@@ -45,7 +46,7 @@ public class Worker implements Runnable{
             }
             System.out.println("Worker #" + workerId + " is working.");
 
-            final ByteBuffer buffer = ByteBuffer.allocate(1024);
+            ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
             socket.read(buffer, null, new SocketReadCompleteHandler(buffer, socket, this));
 
             System.out.println("Work complete");
@@ -76,12 +77,10 @@ public class Worker implements Runnable{
         socket.write(fileResponse, null, new SocketWriteCompleteHandler(fileResponse, socket));
     }
 
-    @SuppressWarnings("null")
     public void handle(ByteBuffer buffer, AsynchronousSocketChannel socket) {
         String request = null;
         String path = null;
         String method = null;
-
 
         try {
             request = decoder.decode(buffer).toString();
@@ -100,23 +99,27 @@ public class Worker implements Runnable{
             System.out.println("Requested " + path + " with method " + method);
             if (!method.equals("HEAD") && !method.equals("GET")) {
                 makeResponse(socket, makeResponseHeader(METHOD_NOT_ALLOWED));
+                return;
             }
         }
         catch (BadRequestException ignored) {
             makeResponse(socket, makeResponseHeader(BAD_REQUEST));
+            return;
         }
 
-        path = Constants.ROOT + path;
+        path = ROOT + path;
         File file = new File(path);
         try {
-            if (!file.getCanonicalPath().contains(Constants.ROOT)) {
+            if (!file.getCanonicalPath().contains(ROOT)) {
                 makeResponse(socket, makeResponseHeader(FORBIDDEN));
-            }
-            else if (!file.exists()) {
-                makeResponse(socket, makeResponseHeader(NOT_FOUND));
+                return;
             }
             else if (file.isDirectory()) {
                 file = new File(path + File.separator + "index.html");
+                if (!file.exists()) {
+                    makeResponse(socket, makeResponseHeader(FORBIDDEN));
+                    return;
+                }
             }
         }
         catch (IOException e) {
@@ -140,12 +143,6 @@ public class Worker implements Runnable{
         else if (method.equals("HEAD")) {
             System.out.println("Writing response to a HEAD request.");
             writeBuffer = ByteBuffer.wrap(getResponseHeader(file).getBytes());
-            try {
-                System.out.println("\r\n" + decoder.decode(writeBuffer).toString() + "\r\n");
-            }
-            catch (CharacterCodingException e) {
-                e.printStackTrace();
-            }
             socket.write(writeBuffer, null, new SocketWriteCompleteHandler(writeBuffer, socket));
         }
     }

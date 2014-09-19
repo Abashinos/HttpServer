@@ -38,10 +38,15 @@ public class HttpRequestParser {
             e.printStackTrace();
         }
 
-        //query?
         if (path == null || path.length() == 0) {
             throw new BadRequestException();
         }
+
+        int queryIndex = path.indexOf("?");
+        if (queryIndex > 0) {
+            path = path.substring(0, queryIndex);
+        }
+
         return path;
     }
 }
