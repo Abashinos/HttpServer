@@ -14,6 +14,7 @@ public class Server {
 
     public static void main (String[] args) throws IOException {
         final Parameters serverParams = new Parameters();
+        final ThreadPool threadPool = new ThreadPool(serverParams);
 
         final AsynchronousServerSocketChannel ssc = AsynchronousServerSocketChannel.open();
         ssc.bind(new InetSocketAddress(ADDRESS, serverParams.getPort()));
@@ -22,6 +23,8 @@ public class Server {
             @Override
             public void completed(AsynchronousSocketChannel result, Void attachment) {
                 ssc.accept(null, this);
+                System.out.println("Request accepted.");
+                threadPool.acceptRequest(result);
             }
 
             @Override

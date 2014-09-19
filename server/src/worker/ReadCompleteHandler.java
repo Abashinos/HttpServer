@@ -4,13 +4,13 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 
-public class ReadCompleteListener implements CompletionHandler{
+public class ReadCompleteHandler implements CompletionHandler{
 
     private ByteBuffer buffer;
     private AsynchronousSocketChannel socket;
     private Worker worker;
 
-    public ReadCompleteListener(ByteBuffer buffer, AsynchronousSocketChannel socket, Worker worker) {
+    public ReadCompleteHandler(ByteBuffer buffer, AsynchronousSocketChannel socket, Worker worker) {
         this.buffer = buffer;
         this.socket = socket;
         this.worker = worker;

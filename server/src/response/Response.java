@@ -1,6 +1,13 @@
 package response;
 
+import worker.Worker;
+
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -10,7 +17,21 @@ import static supplies.Constants.*;
 
 public class Response {
 
+    public static String getExtension (String path) {
+        return path.substring(path.lastIndexOf(".") + 1, path.length()).toLowerCase();
+    }
+
+    public static void readFile(Worker worker, AsynchronousSocketChannel socket, File file) throws IOException {
+        AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.READ);
+        ByteBuffer writeBuffer = ByteBuffer.allocate((int)file.length());
+
+        fileChannel.read(writeBuffer, 0, file.getAbsolutePath(), new FileReadCompleteHandler(socket, fileChannel, worker, writeBuffer));
+    }
+
     public static String getTypeByPath (String path) {
+        if (path == null) {
+            return "text/html";
+        }
         final String ext = path.substring(path.lastIndexOf(".") + 1, path.length()).toLowerCase();
         String extType = null;
 
@@ -49,6 +70,10 @@ public class Response {
                 "EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         return dateFormat.format(calendar.getTime());
+    }
+
+    public static String makeResponseHeader(int responseCode) {
+        return makeResponseHeader(responseCode, null, 0);
     }
 
     public static String makeResponseHeader(int responseCode, String path, long contentLength) {

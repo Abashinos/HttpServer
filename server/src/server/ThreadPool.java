@@ -24,7 +24,8 @@ public class ThreadPool {
     public void startWorkers (int workersNum) {
 
         for (int i = 0; i < workersNum; ++i) {
-            Worker worker = new Worker(this);
+            Worker worker = new Worker(this, i);
+            workers.add(worker);
 
             (new Thread(worker)).start();
         }
@@ -50,8 +51,11 @@ public class ThreadPool {
             requests.add(socket);
         }
         else {
-            worker.setSocket(socket);
-            worker.notify();
+            synchronized (worker) {
+                System.out.println("Work assigned.");
+                worker.setSocket(socket);
+                worker.notify();
+            }
         }
     }
 }
