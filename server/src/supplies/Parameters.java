@@ -1,15 +1,12 @@
 package supplies;
 
-/**
- * Created by user on 11.09.2014.
- */
 public final class Parameters {
 
     private int port;
     private int workersNum;
 
     public Parameters() {
-        this(9000, 8);
+        this(9000, 16);
     }
 
     public Parameters(int port, int workers) {

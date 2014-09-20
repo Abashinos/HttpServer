@@ -8,9 +8,7 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-/**
- * Created by snake on 14.09.14.
- */
+
 public class ThreadPool {
 
     private LinkedBlockingQueue<AsynchronousSocketChannel> requests = new LinkedBlockingQueue<AsynchronousSocketChannel>();
@@ -52,7 +50,7 @@ public class ThreadPool {
         }
         else {
             synchronized (worker) {
-                System.out.println("Work assigned.");
+                //System.out.println("Work assigned.");
                 worker.setSocket(socket);
                 worker.notify();
             }

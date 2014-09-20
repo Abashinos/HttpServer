@@ -17,9 +17,7 @@ import static response.Response.getResponseHeader;
 import static response.Response.makeResponseHeader;
 import static supplies.Decoder.decoder;
 import static supplies.Constants.*;
-/**
- * Created by user on 11.09.2014.
- */
+
 public class Worker implements Runnable{
 
     private ThreadPool threadPool = null;
@@ -34,7 +32,7 @@ public class Worker implements Runnable{
 
     @Override
     public synchronized void run() {
-        System.out.println("Worker #" + workerId + " started.");
+        //System.out.println("Worker #" + workerId + " started.");
         while(true) {
             if (getSocket() == null) {
                 try {
@@ -44,12 +42,12 @@ public class Worker implements Runnable{
 
                 }
             }
-            System.out.println("Worker #" + workerId + " is working.");
+            //System.out.println("Worker #" + workerId + " is working.");
 
             ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
             socket.read(buffer, null, new SocketReadCompleteHandler(buffer, socket, this));
 
-            System.out.println("Work complete");
+            //System.out.println("Work complete");
             threadPool.workComplete(this);
         }
     }
@@ -78,16 +76,10 @@ public class Worker implements Runnable{
     }
 
     public void handle(ByteBuffer buffer, AsynchronousSocketChannel socket) {
-        String request = null;
         String path = null;
         String method = null;
 
-        try {
-            request = decoder.decode(buffer).toString();
-        }
-        catch (CharacterCodingException e) {
-            e.printStackTrace();
-        }
+        String request = new String(buffer.array());
 
         try {
             path = getRequestPath(request);
@@ -96,7 +88,7 @@ public class Worker implements Runnable{
             if (path == null || method == null) {
                 throw new BadRequestException();
             }
-            System.out.println("Requested " + path + " with method " + method);
+            //System.out.println("Requested " + path + " with method " + method);
             if (!method.equals("HEAD") && !method.equals("GET")) {
                 makeResponse(socket, makeResponseHeader(METHOD_NOT_ALLOWED));
                 return;
