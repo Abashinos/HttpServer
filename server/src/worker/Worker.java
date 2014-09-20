@@ -9,13 +9,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.ClosedChannelException;
-import java.nio.charset.CharacterCodingException;
 
 import static request.HttpRequestParser.*;
 import static response.Response.getResponseHeader;
 import static response.Response.makeResponseHeader;
-import static supplies.Decoder.decoder;
 import static supplies.Constants.*;
 
 public class Worker implements Runnable{
@@ -32,7 +29,6 @@ public class Worker implements Runnable{
 
     @Override
     public synchronized void run() {
-        //System.out.println("Worker #" + workerId + " started.");
         while(true) {
             if (getSocket() == null) {
                 try {
@@ -42,7 +38,6 @@ public class Worker implements Runnable{
 
                 }
             }
-            //System.out.println("Worker #" + workerId + " is working.");
 
             ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
             socket.read(buffer, null, new SocketReadCompleteHandler(buffer, socket, this));
@@ -76,8 +71,7 @@ public class Worker implements Runnable{
     }
 
     public void handle(ByteBuffer buffer, AsynchronousSocketChannel socket) {
-        String path = null;
-        String method = null;
+        String path, method;
 
         String request = new String(buffer.array());
 
@@ -88,7 +82,6 @@ public class Worker implements Runnable{
             if (path == null || method == null) {
                 throw new BadRequestException();
             }
-            //System.out.println("Requested " + path + " with method " + method);
             if (!method.equals("HEAD") && !method.equals("GET")) {
                 makeResponse(socket, makeResponseHeader(METHOD_NOT_ALLOWED));
                 return;
@@ -122,8 +115,6 @@ public class Worker implements Runnable{
             makeResponse(socket, makeResponseHeader(NOT_FOUND));
         }
 
-        // return response or file
-        ByteBuffer writeBuffer = null;
         if (method.equals("GET")) {
             try {
                 Response.readFile(this, socket, file);
@@ -134,7 +125,7 @@ public class Worker implements Runnable{
         }
         else if (method.equals("HEAD")) {
             System.out.println("Writing response to a HEAD request.");
-            writeBuffer = ByteBuffer.wrap(getResponseHeader(file).getBytes());
+            ByteBuffer writeBuffer = ByteBuffer.wrap(getResponseHeader(file).getBytes());
             socket.write(writeBuffer, null, new SocketWriteCompleteHandler(writeBuffer, socket));
         }
     }

@@ -28,6 +28,7 @@ public class FileReadCompleteHandler implements CompletionHandler {
         try {
             fileChannel.close();
             String path = (String) attachment;
+            Response.writeFileToCache(buffer, path);
             worker.writeFile(socketChannel, buffer, path);
         }
         catch (IOException exc) {

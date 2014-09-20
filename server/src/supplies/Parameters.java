@@ -2,6 +2,8 @@ package supplies;
 
 public final class Parameters {
 
+    public static boolean CACHE_ENABLED = false;
+
     private int port;
     private int workersNum;
 

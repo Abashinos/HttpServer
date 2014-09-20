@@ -17,10 +17,12 @@ public class Server {
 
         int customPort = 0;
         int customWorkersNum = 0;
+        boolean cacheEnabled = false;
         try {
             if (args.length != 0) {
                 customPort = Integer.parseInt(args[0]);
                 customWorkersNum = Integer.parseInt(args[1]);
+                cacheEnabled = (Integer.parseInt(args[2]) > 0);
             }
         }
         catch (IndexOutOfBoundsException ignored) {}
@@ -28,6 +30,8 @@ public class Server {
 
         final Parameters serverParams = new Parameters((customPort == 0)?(9000):(customPort),
                                                        (customWorkersNum == 0)?(8):(customWorkersNum));
+        Parameters.CACHE_ENABLED = cacheEnabled;
+
         final ThreadPool threadPool = new ThreadPool(serverParams);
 
         final AsynchronousServerSocketChannel ssc = AsynchronousServerSocketChannel.open();
@@ -40,7 +44,6 @@ public class Server {
             @Override
             public void completed(AsynchronousSocketChannel result, Void attachment) {
                 ssc.accept(null, this);
-                //System.out.println("Request accepted.");
                 threadPool.acceptRequest(result);
             }
 

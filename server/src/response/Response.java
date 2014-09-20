@@ -1,5 +1,6 @@
 package response;
 
+import supplies.Parameters;
 import worker.Worker;
 
 import java.io.File;
@@ -10,22 +11,38 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import static supplies.Constants.*;
 
 public class Response {
 
+    private static HashMap <String, ByteBuffer> cachedFiles = new HashMap<String, ByteBuffer>();
+
     public static String getExtension (String path) {
         return path.substring(path.lastIndexOf(".") + 1, path.length()).toLowerCase();
+    }
+
+    public static void writeFileToCache(ByteBuffer file, String path) {
+        cachedFiles.put(path, file);
     }
 
     public static void readFile(Worker worker, AsynchronousSocketChannel socket, File file) throws IOException {
         AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.READ);
         ByteBuffer writeBuffer = ByteBuffer.allocate((int)file.length());
 
-        fileChannel.read(writeBuffer, 0, file.getAbsolutePath(), new FileReadCompleteHandler(socket, fileChannel, worker, writeBuffer));
+        String path = file.getAbsolutePath();
+        if (Parameters.CACHE_ENABLED && cachedFiles.containsKey(path)) {
+            worker.writeFile(socket, cachedFiles.get(path), path);
+        }
+        else {
+            fileChannel.read(writeBuffer, 0, path, new FileReadCompleteHandler(socket, fileChannel, worker, writeBuffer));
+        }
     }
 
     public static String getTypeByPath (String path) {
