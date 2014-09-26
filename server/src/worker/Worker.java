@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.util.HashMap;
 
 import static request.HttpRequestParser.*;
 import static response.Response.getResponseHeader;
@@ -21,10 +22,21 @@ public class Worker implements Runnable{
     private AsynchronousSocketChannel socket = null;
     private int workerId = 0;
     private int bufferSize = 4096;
+    private HashMap <String, ByteBuffer> cachedFiles = new HashMap<String, ByteBuffer>();
 
     public Worker(ThreadPool threadPool, int id) {
         this.threadPool = threadPool;
         this.workerId = id;
+    }
+
+    public boolean cacheContains (String key) {
+        return cachedFiles.containsKey(key);
+    }
+    public void addToCache(String key, ByteBuffer buffer) {
+        cachedFiles.put(key, buffer);
+    }
+    public ByteBuffer getFromCache(String key) {
+        return cachedFiles.get(key);
     }
 
     @Override
@@ -60,12 +72,23 @@ public class Worker implements Runnable{
         socket.write(buffer, null, new SocketWriteCompleteHandler(buffer, socket));
     }
 
-    public void writeFile (AsynchronousSocketChannel socket, ByteBuffer buffer, String path) {
+    public void writeFile (AsynchronousSocketChannel socket, ByteBuffer buffer, String path, boolean fromCache) {
+        if (!fromCache) {
+            buffer.flip();
+            System.out.println(buffer.toString());
+        }
+        else {
+            System.out.println(buffer.toString());
+            //System.out.println(buffer.toString());
+            //buffer.flip();
+        }
         String preparedHeader = Response.makeResponseHeader(OK, Response.getExtension(path), buffer.capacity());
         ByteBuffer wrappedHeader = ByteBuffer.wrap(preparedHeader.getBytes());
-        buffer.flip();
 
-        ByteBuffer fileResponse = ByteBuffer.allocate(buffer.capacity() + preparedHeader.length()).put(wrappedHeader).put(buffer);
+        ByteBuffer fileResponse = ByteBuffer.allocate(buffer.capacity() + preparedHeader.length());
+        fileResponse.put(wrappedHeader);
+        fileResponse.put(buffer);
+
         fileResponse.position(0);
         socket.write(fileResponse, null, new SocketWriteCompleteHandler(fileResponse, socket));
     }
@@ -124,7 +147,6 @@ public class Worker implements Runnable{
             }
         }
         else if (method.equals("HEAD")) {
-            System.out.println("Writing response to a HEAD request.");
             ByteBuffer writeBuffer = ByteBuffer.wrap(getResponseHeader(file).getBytes());
             socket.write(writeBuffer, null, new SocketWriteCompleteHandler(writeBuffer, socket));
         }

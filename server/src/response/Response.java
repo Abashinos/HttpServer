@@ -1,5 +1,7 @@
 package response;
 
+import com.sun.deploy.net.socket.UnixSocketException;
+import server.ThreadPool;
 import supplies.Parameters;
 import worker.Worker;
 
@@ -17,30 +19,43 @@ import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static supplies.Constants.*;
 
 public class Response {
 
-    private static HashMap <String, ByteBuffer> cachedFiles = new HashMap<String, ByteBuffer>();
+    public static AtomicInteger READS_FROM_HDD = new AtomicInteger();
 
     public static String getExtension (String path) {
         return path.substring(path.lastIndexOf(".") + 1, path.length()).toLowerCase();
     }
 
-    public static void writeFileToCache(ByteBuffer file, String path) {
-        cachedFiles.put(path, file);
-    }
-
     public static void readFile(Worker worker, AsynchronousSocketChannel socket, File file) throws IOException {
-        AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.READ);
-        ByteBuffer writeBuffer = ByteBuffer.allocate((int)file.length());
-
+        AsynchronousFileChannel fileChannel = null;
         String path = file.getAbsolutePath();
-        if (Parameters.CACHE_ENABLED && cachedFiles.containsKey(path)) {
-            worker.writeFile(socket, cachedFiles.get(path), path);
+
+        if(!Parameters.CACHE_ENABLED || (Parameters.CACHE_ENABLED && !worker.cacheContains(path))) {
+            while (true) {
+                try {
+                    fileChannel = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.READ);
+                    ThreadPool.FILE_CHANNELS_OPEN.incrementAndGet();
+                    System.out.println(ThreadPool.FILE_CHANNELS_OPEN);
+                    break;
+                } catch (IOException e) {
+
+                }
+            }
+        }
+
+
+
+        if (Parameters.CACHE_ENABLED && worker.cacheContains(path)) {
+            worker.writeFile(socket, worker.getFromCache(path), path, true);
         }
         else {
+            ByteBuffer writeBuffer = ByteBuffer.allocate((int)file.length());
+            //System.out.println(READS_FROM_HDD.incrementAndGet());
             fileChannel.read(writeBuffer, 0, path, new FileReadCompleteHandler(socket, fileChannel, worker, writeBuffer));
         }
     }

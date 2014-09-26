@@ -7,12 +7,15 @@ import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class ThreadPool {
 
     private LinkedBlockingQueue<AsynchronousSocketChannel> requests = new LinkedBlockingQueue<AsynchronousSocketChannel>();
     private ConcurrentLinkedQueue<Worker> workers = new ConcurrentLinkedQueue<Worker>();
+    public static AtomicInteger FILE_CHANNELS_OPEN = new AtomicInteger();
+    public static AtomicInteger FILES_IN_CACHE = new AtomicInteger();
 
     public ThreadPool (Parameters parameters) {
         startWorkers(parameters.getWorkersNum());

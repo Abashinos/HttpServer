@@ -1,5 +1,7 @@
 package response;
 
+import server.ThreadPool;
+import supplies.Parameters;
 import worker.Worker;
 
 import java.io.IOException;
@@ -23,17 +25,31 @@ public class FileReadCompleteHandler implements CompletionHandler {
         this.buffer = buffer;
     }
 
+    public static ByteBuffer clone(ByteBuffer original) {
+        ByteBuffer clone = ByteBuffer.allocate(original.capacity());
+        original.rewind();//copy from the beginning
+        clone.put(original);
+        original.rewind();
+        clone.flip();
+        return clone;
+    }
+
     @Override
     public void completed(Object result, Object attachment) {
+
         try {
             fileChannel.close();
-            String path = (String) attachment;
-            Response.writeFileToCache(buffer, path);
-            worker.writeFile(socketChannel, buffer, path);
+            ThreadPool.FILE_CHANNELS_OPEN.decrementAndGet();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        catch (IOException exc) {
-            exc.printStackTrace();
+
+        String path = (String) attachment;
+        if (Parameters.CACHE_ENABLED) {
+            worker.addToCache(path, clone(buffer));
+            //buffer.position(0);
         }
+        worker.writeFile(socketChannel, buffer, path, false);
     }
 
     @Override

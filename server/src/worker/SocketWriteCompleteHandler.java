@@ -17,7 +17,7 @@ public class SocketWriteCompleteHandler implements CompletionHandler {
 
     @Override
     public void completed(Object result, Object attachment) {
-        while (buffer.position() < buffer.capacity()) {
+        if (buffer.position() < buffer.capacity()) {
             socket.write(buffer, null, this);
         }
         buffer.clear();
