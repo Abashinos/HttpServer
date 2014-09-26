@@ -3,7 +3,6 @@ package worker;
 import Exceptions.BadRequestException;
 import response.Response;
 import server.ThreadPool;
-import supplies.Parameters.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +19,7 @@ public class Worker implements Runnable{
     private ThreadPool threadPool = null;
     private AsynchronousSocketChannel socket = null;
     private int workerId = 0;
-    private int bufferSize = 4096;
+    private int bufferSize = 8192;
 
     public Worker(ThreadPool threadPool, int id) {
         this.threadPool = threadPool;
@@ -42,7 +41,6 @@ public class Worker implements Runnable{
             ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
             socket.read(buffer, null, new SocketReadCompleteHandler(buffer, socket, this));
 
-            //System.out.println("Work complete");
             threadPool.workComplete(this);
         }
     }
@@ -65,7 +63,8 @@ public class Worker implements Runnable{
         ByteBuffer wrappedHeader = ByteBuffer.wrap(preparedHeader.getBytes());
         buffer.flip();
 
-        ByteBuffer fileResponse = ByteBuffer.allocate(buffer.capacity() + preparedHeader.length()).put(wrappedHeader).put(buffer);
+        ByteBuffer fileResponse = ByteBuffer.allocate(buffer.capacity() + preparedHeader.length())
+                                    .put(wrappedHeader).put(buffer);
         fileResponse.position(0);
         socket.write(fileResponse, null, new SocketWriteCompleteHandler(fileResponse, socket));
     }
@@ -124,7 +123,6 @@ public class Worker implements Runnable{
             }
         }
         else if (method.equals("HEAD")) {
-            System.out.println("Writing response to a HEAD request.");
             ByteBuffer writeBuffer = ByteBuffer.wrap(getResponseHeader(file).getBytes());
             socket.write(writeBuffer, null, new SocketWriteCompleteHandler(writeBuffer, socket));
         }

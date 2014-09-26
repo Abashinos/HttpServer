@@ -9,7 +9,6 @@ import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.text.ParseException;
 
 public class Server {
 
@@ -17,12 +16,10 @@ public class Server {
 
         int customPort = 0;
         int customWorkersNum = 0;
-        boolean cacheEnabled = false;
         try {
             if (args.length != 0) {
                 customPort = Integer.parseInt(args[0]);
                 customWorkersNum = Integer.parseInt(args[1]);
-                cacheEnabled = (Integer.parseInt(args[2]) > 0);
             }
         }
         catch (IndexOutOfBoundsException ignored) {}
@@ -30,12 +27,11 @@ public class Server {
 
         final Parameters serverParams = new Parameters((customPort == 0)?(9000):(customPort),
                                                        (customWorkersNum == 0)?(8):(customWorkersNum));
-        Parameters.CACHE_ENABLED = cacheEnabled;
 
         final ThreadPool threadPool = new ThreadPool(serverParams);
 
         final AsynchronousServerSocketChannel ssc = AsynchronousServerSocketChannel.open();
-        ssc.bind(new InetSocketAddress(ADDRESS, serverParams.getPort()), 200);
+        ssc.bind(new InetSocketAddress(ADDRESS, serverParams.getPort()), serverParams.getBacklog());
         System.out.println("Server is starting on port " + serverParams.getPort() +
                            " with " + serverParams.getWorkersNum() +
                             ((serverParams.getWorkersNum() == 1) ? " worker." : " workers."));

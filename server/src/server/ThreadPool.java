@@ -3,7 +3,6 @@ package server;
 import supplies.Parameters;
 import worker.Worker;
 
-import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -50,7 +49,6 @@ public class ThreadPool {
         }
         else {
             synchronized (worker) {
-                //System.out.println("Work assigned.");
                 worker.setSocket(socket);
                 worker.notify();
             }

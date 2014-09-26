@@ -8,14 +8,6 @@ import static java.net.URLDecoder.decode;
 
 public class HttpRequestParser {
 
-    public static void parse(InputStream is) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-        String line = null;
-        while ((line = br.readLine()) != null && !line.isEmpty()) {
-            System.out.println(line);
-        }
-    }
-
     public static String getRequestMethod(String request) {
         int end = request.indexOf(" ");
         return ((end != 0) ? (request.substring(0, end)) : null);

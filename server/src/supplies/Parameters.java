@@ -2,18 +2,22 @@ package supplies;
 
 public final class Parameters {
 
-    public static boolean CACHE_ENABLED = false;
-
     private int port;
     private int workersNum;
+    private int backlog;
 
     public Parameters() {
-        this(9000, 16);
+        this(9000, 16, 200);
     }
 
     public Parameters(int port, int workers) {
+        this(port, workers, 200);
+    }
+
+    public Parameters(int port, int workers, int backlog) {
         this.setPort(port);
         this.setWorkersNum(workers);
+        this.setBacklog(backlog);
     }
 
     public int getPort() {
@@ -30,5 +34,13 @@ public final class Parameters {
 
     public void setWorkersNum(int workers) {
         this.workersNum = workers;
+    }
+
+    public int getBacklog() {
+        return backlog;
+    }
+
+    public void setBacklog(int backlog) {
+        this.backlog = backlog;
     }
 }
